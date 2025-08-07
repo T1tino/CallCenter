@@ -1,39 +1,83 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CallCenter.Controllers
+[Route("api/[controller]")]
+[ApiController]
+public class CallController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class CallController : ControllerBase
+    [HttpGet]
+    [Route("")]
+    public ActionResult Get()
     {
-        [HttpPost("[action]/{phonenumber}")]
-        [Route("[action]/{phonenumber}")]
-        public ActionResult Receive(string phoneNumber)
-        {
-            if (Call.Receive(phoneNumber) == 0)
-                return Ok(MessageResponse.GetResponse(0, "Call added to queue", MessageType.Success));
-            else
-                return Ok(MessageResponse.GetResponse(1, "Could not add call to queue", MessageType.Error));
-        }
+        List<Call> list = Call.Get();
 
-        [HttpPost("[action]")]
-        [Route("[action]")]
-        public ActionResult End()
-        {
-            int c = Call.End();
-            return Ok(MessageResponse.GetResponse(0, c + " calls ended", MessageType.Success));
-        }
+        return Ok(CallListViewModel.GetResponse(list));
+    }
 
-        [HttpGet("[action]/{date}")]
-        [Route("[action]/{date}")]
-        public ActionResult Totals(DateTime date)
-        {
-            return Ok(ViewTotalsResponse.GetResponse(date));
-        }
+    // [HttpGet]
+    // [Route("{id}")]
+    // public ActionResult Get(int id)
+    // {
+    //     try
+    //     {
+    //         Call a = Call.Get(id);
+    //         return Ok(CallViewModel.GetResponse(a));
+    //     }
+    //     catch (Exception e)
+    //     {
+    //         return Ok(MessageResponse.GetResponse(999, e.Message, MessageType.Error));
+    //     }
+    //
+    // }
+    
+    [HttpPost("[action]/{phoneNumber}")]
+    public ActionResult Receive(string phoneNumber)
+    {
+        int result = Call.ReceiveCall(phoneNumber);
+        
+        //message type
+        // MessageType type = MessageType.Success;
+        // if (result > 0) type = MessageType.Error;
+        MessageType type = result > 0 ? MessageType.Error : MessageType.Success;
+        
+        //login result
+        string message = result > 0 ? "Error: Call not received" : "Call received" ;
+        
+        //response
+        return Ok(MessageResponse.GetResponse(result, message, type)); 
+    }
+    [HttpGet("[action]/{callId}/{statusEnd}")]
+    public ActionResult End(int callId, int statusEnd)
+    {
+        int result = Call.EndCall(callId, statusEnd);
+        
+        //message type
+        // MessageType type = MessageType.Success;
+        // if (result > 0) type = MessageType.Error;
+        MessageType type = result > 0 ? MessageType.Error : MessageType.Success;
+        
+        //login result
+        string message = ((EndCallResult)result).ToString();
+        
+        //response
+        return Ok(MessageResponse.GetResponse(result, message, type)); 
+    }
+    [HttpGet("[action]")]
+    public ActionResult EndRandom()
+    {
+        
+        int result = Call.EndCallRandom();
+        
+        
+        //login result
+        string message = ((EndCallResult)result).ToString();
+        
+        //response
+        return Ok(MessageResponse.GetResponse(0, "Calls ended "+ result, MessageType.Information)); 
+    }
+    
+    [HttpGet("[action]/{date}")]
+    public ActionResult Totals(DateTime date)
+    {
+        return Ok(ViewTotalsResponse.GetResponse(date));
     }
 }

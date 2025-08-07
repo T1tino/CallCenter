@@ -1,20 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using Microsoft.Data.SqlClient;
 using System.Data;
-using System.Data.SqlClient;
 
 public class SqlServerConnection
 {
     #region variables
-
+    
     private static string connectionString =
-        "Data Source = " + Config.Configuration.SqlServer.Server + ";" +
+        "Data Source = " + Config.Configuration.SqlServer.Server + "; " +
         "Initial Catalog = " + Config.Configuration.SqlServer.Database + "; " +
         "User Id = " + Config.Configuration.SqlServer.User + "; " +
-        "Password = " + Config.Configuration.SqlServer.Password + "; ";
-
+        "Password = " + Config.Configuration.SqlServer.Password + ";"+
+        "TrustServerCertificate = " + Config.Configuration.SqlServer.TrustServerCertificate+";";  
+    
     #endregion
 
     #region class methods
@@ -23,131 +20,137 @@ public class SqlServerConnection
     {
         //connection
         SqlConnection connection = new SqlConnection();
+        //open
         try
         {
-            //assign connection string
+            //connection
             connection.ConnectionString = connectionString;
-            //open connection
+            //open
             connection.Open();
         }
-        catch(ArgumentException e)
+        catch (ArgumentException e)
         {
+            Console.WriteLine("ARGUMENT EXCEPTION: "+e);
         }
-        catch(SqlException e)
+        catch (SqlException e)
         {
+            Console.WriteLine("SQL EXCEPTION: "+e);
         }
         catch(Exception e)
         {
+            Console.WriteLine("OTHER EXCEPTION: "+e);
         }
-        //return connection
+        //return connected
         return connection;
     }
-
+    
+    
     public static DataTable ExecuteQuery(SqlCommand command)
     {
-        //create table
         DataTable table = new DataTable();
-        //get connection
+        //get the connection to DB server
         SqlConnection connection = GetConnection();
-        //check if connection is open
+        
         if (connection.State == ConnectionState.Open)
         {
             try
             {
-                //assign connection to command
+                //assign connection
                 command.Connection = connection;
                 //adapter
                 SqlDataAdapter adapter = new SqlDataAdapter(command);
-                //execute query and fill result table
+                //fill table
                 adapter.Fill(table);
-                //close connection
-                connection.Close();
-                connection.Dispose();
             }
             catch (SqlException e)
             {
+                Console.WriteLine("SQL EXCEPTION: "+e);
             }
             catch (Exception e)
             {
-            }
-        }
-        //return table
-        return table;
-    }
-
-
-    public static bool ExecuteCommend(SqlCommand command)
-    {
-        //result
-        bool result = false;
-        //get connection
-        SqlConnection connection = GetConnection();
-        //check if connection is open
-        if (connection.State == ConnectionState.Open)
-        {
-            try
-            {
-                //assign connection to command
-                command.Connection = connection;
-                //execute procedure
-                command.ExecuteNonQuery();
-                //result
-                result = true;
-            }
-            catch (SqlException e)
-            {
-            }
-            catch (Exception e)
-            {
+                Console.WriteLine("AN EXCEPTION: "+e);
             }
             //close connection
             connection.Close();
-            connection.Dispose();
         }
-        //return result
-        return result;
+        return table;
     }
-
-
+    //<summary>
+    //Execute a stored procedure
+    //</summary>
     public static int ExecuteProcedure(SqlCommand command)
     {
         //result
-        int result = 999;
-        //get connection
+        int result = 0;
+        //get the connection to DB server
         SqlConnection connection = GetConnection();
-        //check if connection is open
+        
         if (connection.State == ConnectionState.Open)
         {
             try
             {
-                //assign connection to command
+                //assign connection
                 command.Connection = connection;
-                //command is a stored procedure
+                //command is a store procedure
                 command.CommandType = CommandType.StoredProcedure;
-                //return parameter
-                SqlParameter returnParameter = new SqlParameter("@status", DbType.Int32);
+                //result parameter
+                SqlParameter resultParameter = new SqlParameter("@status", DbType.Int32);
                 //parameter is output
-                returnParameter.Direction = ParameterDirection.Output;
+                resultParameter.Direction = ParameterDirection.Output;
                 //add parameter to command
-                command.Parameters.Add(returnParameter);
+                command.Parameters.Add(resultParameter);
                 //execute procedure
                 command.ExecuteNonQuery();
-                //read result
-                result = (Int32)command.Parameters["@status"].Value;
-                //close connection
-                connection.Close();
-                connection.Dispose();
+                //result
+                result =(int) command.Parameters["@status"].Value;
+
             }
             catch (SqlException e)
             {
+                Console.WriteLine("SQL EXCEPTION: "+e);
             }
             catch (Exception e)
             {
+                Console.WriteLine("AN EXCEPTION: "+e);
             }
+            //close connection
+            connection.Close();
         }
-        //return result
+        return result;
+    }
+
+    //<summary>
+    //Execute a stored procedure
+    //</summary>
+    public static bool ExecuteCommand(SqlCommand command)
+    {
+        //result
+        bool result = false;
+        //get the connection to DB server
+        SqlConnection connection = GetConnection();
+        
+        if (connection.State == ConnectionState.Open)
+        {
+            try
+            {
+                //assign connection
+                command.Connection = connection;
+                //execute procedure
+                command.ExecuteNonQuery();
+                //success
+                result = true;
+
+            }
+            catch (SqlException e)
+            { Console.WriteLine("SQL EXCEPTION: "+e); }
+            catch (Exception e)
+            { Console.WriteLine("AN EXCEPTION: "+e); }
+            //close connection
+            connection.Close();
+        }
         return result;
     }
 
     #endregion
+
 }

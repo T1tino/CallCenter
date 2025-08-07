@@ -1,31 +1,26 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Data;
-using System.Data.SqlClient;
+﻿using System.Data;
+using Microsoft.Data.SqlClient;
 
 public class Agent
 {
-    #region statements
+    #region statement
 
     private static string select = @"
-        select id as agent_id, name as agent_name, photo as agent_photo 
-        from agents
-        order by agent_name";
-    private static string selectById = @"
-        select id as agent_id, name as agent_name, photo as agent_photo 
-        from agents
-        where id = @ID";
+           select id as agent_id, name as agent_name, photo as agent_photo, pin as agent_pin 
+           from agents ";
 
+    private static string insert = @"INSERT INTO agents (id, name,photo, pin)
+                            VALUES (@id, @name, @photo, @pin)";
+    
+    
     #endregion
-
+    
     #region attributes
 
     private int _id;
     private string _name;
-    private int _pin;
     private string _photo;
+    private int _pin;
 
     #endregion
 
@@ -33,61 +28,64 @@ public class Agent
 
     public int Id { get => _id; }
     public string Name { get => _name; set => _name = value; }
-    public int Pin { set => _pin = value; }
     public string Photo { get => Config.Configuration.Paths.Domain + Config.Configuration.Paths.Photos.Agents + _photo; set => _photo = value; }
-
+    public int Pin { set => _pin = value; }
+    
     #endregion
 
     #region constructors
 
     /// <summary>
-    /// Creates an empty object
+    /// Creates an empty Agent object
     /// </summary>
     public Agent()
     {
         _id = 0;
         _name = "";
+        _photo = "";
         _pin = 0;
-        _photo = "nophoto.png";
     }
+    public Agent(int id, string name)
+    {
+        _id = id;
+        _name = name;
+        _photo = "";
+        _pin = 0;
+    }
+
     /// <summary>
     /// Creates an object with data from the arguments
     /// </summary>
     /// <param name="id">Agent id</param>
-    /// <param name="firstName">First name</param>
-    /// <param name="lastName">Last name</param>
-    /// <param name="dateOfBirth">Date of birth</param>
-    /// <param name="photo">Photo file name</param>
-    public Agent(int id, string name, int pin, string photo)
+    /// <param name="name">Full name</param>
+    /// <param name="photo">Photo URL</param>
+    /// <param name="pin">Agent pin</param>
+    public Agent(int id, string name, string photo, int pin)
     {
         _id = id;
         _name = name;
-        _pin = pin;
         _photo = photo;
+        _pin = pin;
     }
 
-    public Agent(int id, string name, string photo)
-    {
-        _id = id;
-        _name = name;
-        _pin = 0;
-        _photo = photo;
-    }
     #endregion
 
     #region class methods
-
+    
     /// <summary>
-    /// Returns a list of all the agents
+    /// Returns a list of all agents
     /// </summary>
     /// <returns></returns>
-    public static List<Agent> Get()
+    public static List<Agent> Get() 
     {
-        //sql command
-        SqlCommand command = new SqlCommand(select);
-        //execute query and populate list
+        //command
+        SqlCommand command = new SqlCommand(select + " order by name");
+        
+        //execute
         return AgentMapper.ToList(SqlServerConnection.ExecuteQuery(command));
+        
     }
+
     /// <summary>
     /// Returns the agent with the specified id
     /// </summary>
@@ -95,17 +93,53 @@ public class Agent
     /// <returns></returns>
     public static Agent Get(int id)
     {
-        //sql command
-        SqlCommand command = new SqlCommand(selectById);
-        //paramaters
+        //command
+        SqlCommand command = new SqlCommand(select + " where id = @ID");
+        
+        //parameters
         command.Parameters.AddWithValue("@ID", id);
-        //execute query 
+        //execute
         DataTable table = SqlServerConnection.ExecuteQuery(command);
-        //check if rows were found
         if (table.Rows.Count > 0)
             return AgentMapper.ToObject(table.Rows[0]);
-        else
-            throw new AgentNotFoundException(id);
+        
+        throw new AgentNotFoundException(id);
+
+    }
+    
+    public static bool Insert(PostAgent p)
+    {
+        SqlCommand command  =  new SqlCommand(insert);
+        
+        //get the extension of file (.jpg, .png, .jpeg)
+        string extension = p.Photo.FileName.Split('.').Last();
+        //set the file name the agent id
+        string photoFilename = p.Id + "." + extension;
+        
+        //parameters
+        command.Parameters.AddWithValue("@id", p.Id);
+        command.Parameters.AddWithValue("@name", p.Name);
+        command.Parameters.AddWithValue("@photo", photoFilename);
+        command.Parameters.AddWithValue("@pin", p.Pin);
+        //execute, return if dont execute
+        if (!SqlServerConnection.ExecuteCommand(command))
+            return false; //error
+
+        //get the path of photos in the system server
+        string path = Config.Configuration.Paths.Server + Config.Configuration.Paths.Photos.Agents + photoFilename;
+        try
+        {
+            //write the image in the disl
+            using (FileStream stream = new FileStream(path, FileMode.Create))
+            { p.Photo.CopyTo(stream); }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            //error
+            return false;
+        }
+        return true;
     }
 
     #endregion

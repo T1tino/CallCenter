@@ -1,15 +1,18 @@
 {
-  "SqlServer": {
-    "Server": "TIC-HP-LPT26",
-    "Database": "callcenter2025",
-    "User": "sa",
-    "Password": "usersql"
-  },
-  "Paths": {
-    "Domain": "http://localhost:8080/callcenter2025/",
-    "Photos": {
-      "Users": "photos/users/",
-      "Agents": "photos/agents/"
-    } 
-  }
+    "SqlServer": {
+        "Server": "localhost,1433",
+        "Database": "callcenter2025",
+        "User": "SA",
+        "Password": "Admin123?",
+        "TrustServerCertificate": true
+    }
+,
+    "Paths": {
+        "Domain": "http://localhost:80/callcenter/",
+        "Server": "/srv/http/callcenter/",
+        "Photos": {
+            "Users": "photos/users/",
+            "Agents": "photos/agents/"
+        }
+    }
 }
