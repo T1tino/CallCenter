@@ -1,0 +1,6 @@
+/src/CallCenter/obj/Debug/net8.0/CallCenter.csproj.AssemblyReference.cache
+/src/CallCenter/obj/Debug/net8.0/CallCenter.GeneratedMSBuildEditorConfig.editorconfig
+/src/CallCenter/obj/Debug/net8.0/CallCenter.AssemblyInfoInputs.cache
+/src/CallCenter/obj/Debug/net8.0/CallCenter.AssemblyInfo.cs
+/src/CallCenter/obj/Debug/net8.0/CallCenter.csproj.CoreCompileInputs.cache
+/src/CallCenter/obj/Debug/net8.0/CallCenter.MvcApplicationPartsAssemblyInfo.cache

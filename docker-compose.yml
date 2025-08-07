@@ -1,0 +1,11 @@
+services:
+  callcenter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: callcenter_dev
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/src
+    command: ["dotnet", "run", "--project", "CallCenter/CallCenter.csproj", "--urls", "http://0.0.0.0:5000"]
